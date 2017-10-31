@@ -1,0 +1,41 @@
+#!/usr/bin/python
+#Installer for the RPi Debug Clip
+#Copyright (C) 2014-2015 Ryanteck LTD.
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>
+import time
+import os
+import platform
+debianDistros = ["Ubuntu","Debian","debian","LinuxMint"]
+
+print("This program will install the RPi Debug Clip on Mac & Linux")
+time.sleep(1)
+if(os.geteuid() !=0):
+	print ("\nError")
+	print ("Not running as super user which is required for installation and connecting to the serial port.\nPlease Relaunch Program as Super User (SUDO / SU).")
+	exit()
+
+#User is super user
+print("Now Downloading")
+#usr/bin works with sudo
+distro = str(platform.linux_distribution()[0])
+if(distro in debianDistros):
+	os.system("wget -L https://bitbucket.org/ryanteckltd/rpidebugclip/raw/e881b5a63f1362abdd8b384c44ecaf1a2827589c/rpidebugclip -O /usr/bin/rpidebugclip")
+else:
+	os.system("curl -L https://bitbucket.org/ryanteckltd/rpidebugclip/raw/e881b5a63f1362abdd8b384c44ecaf1a2827589c/rpidebugclip -o /usr/bin/rpidebugclip")
+
+print("Downloaded, now moving")
+#os.system("mv /tmp/rpidebugclip /usr/local/bin/rpidebugclip")
+os.system("chmod -X /usr/bin/rpidebugclip")
+os.system("chmod 555 /usr/bin/rpidebugclip")
+print("Ryanteck RPi Debug Clip Launcher now installed\n Type 'sudo rpidebugclip' into the terminal to launch.")

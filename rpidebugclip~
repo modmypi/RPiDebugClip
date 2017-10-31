@@ -1,0 +1,225 @@
+#!/usr/bin/python
+#Auto Launcher for RPi Debug Clip. Aim to be one command to automagically launch python and detect the com port to launch screen on.
+#Copyright (C) 2014-2015 Ryanteck LTD.
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+#Lets import time and OS
+import time
+import os
+import platform
+import sys
+
+
+def findOS():
+	debianDistros = ["Ubuntu","Debian","debian"]
+	redHatDistros = ["Fedora"]
+	suse = ["openSUSE "]
+	#Split into Windows, Debian, Redhat & Mac
+	
+	if(platform.linux_distribution() != ""):
+		distro = str(platform.linux_distribution()[0])
+		#Platform is linux based
+		print ("Platform is Linux Based, getting distro")
+		
+		if(distro in debianDistros):
+			#Computer is debian based, Should use either APT-GET or Aptitude#
+			print ("I have detected you are running an Debian based OS\n")
+			
+			#Now check if SU
+			print ("Checking to see if running with super user")
+			if(os.geteuid() !=0):
+				print ("\nError")
+				print ("Not running as super user which may be required for installation and connecting to the serial port.\nPlease Relaunch Program as Super User (SUDO / SU).")
+				exit()
+			return "debian"
+			
+		
+		elif(distro in redHatDistros):
+			#Computer is Red Hat Based, Should use YUM
+			print ("I have detected you are using a Red Hat based OS")
+			
+			#Now check SU
+			
+			print ("Checking to see if running with super user")
+			if(os.geteuid() !=0):
+				print ("\nError")
+				print ("Not running as super user which may be required for installation and connecting to the serial port.\nPlease Relaunch Program as Super User (SUDO / SU).")
+				exit()
+				
+				
+			return "redHat"
+			
+		elif(distro in suse):
+			#Computer is running open suse.
+			print ("I have detected you are using Open SUSE")
+			print ("Now checking to see if running with super user")
+			if(os.geteuid() !=0):
+				print ("\nError")
+				print ("Not running as super user which may be required for installation and connecting to the serial port.\nPlease Relaunch Program as Super User (SUDO / SU).")
+				exit()
+			return "suse"
+		
+		else:
+			print (distro)
+			print ("I do not recognise the distro you are using")
+			print ("Please email Ryan@Ryanteck.uk for us to add it to this launcher.")
+			exit()
+
+	elif(platform.system() == "Windows"):
+		#Platform is windows based
+		print ("Platform is Windows")
+		print ("I have detected your OS as a Windows Based Platform")
+		return "windows"
+	
+	elif(platform.mac_ver() != ""):
+		#platform is mac based
+		print ("Platform is Mac")
+		print ("I have detected your OS as a Mac Based Platform")
+		return "mac"
+	
+	else:
+		#Unknown Platform
+		print ("Platform is not recognised or something went wrong")
+		
+		exit()
+		
+
+
+def installPyserial():
+	computerOS = findOS()
+	print ("Installing Pyserial")
+	if(computerOS == "debian"):
+		
+		print ("Assuming your using APT-GET")
+		print ("Installing serial in 5 seconds")
+		time.sleep(5)
+		#If Not Debian
+		if(platform.linux_distribution()[0] != "debian"):
+			os.system("apt-get install python-serial -y")
+		else:
+			print ("Your using Debian which uses outdated packages.\nWorking around by downloading from the future!")
+			os.system("curl -L http://ryanteck.com/pyserialdebian -o pyserial.deb && dpkg -i pyserial.deb")
+		
+	elif(computerOS =="redHat"):
+		print ("Assuming your using an OS that has easy_install on.")
+		print ("Installing serial in 5 seconds")
+		time.sleep(5)
+		os.system("easy_install pyserial")
+
+	elif(computerOS =="suse"):
+		print ("Assuming your using an OS that has suse on.")
+		print ("Installing serial in 5 seconds")
+		time.sleep(5)
+		os.system("zypper install python-pyserial")	
+
+	elif(computerOS=="mac"):
+		print ("Assuming mac has Easy Install")
+		print ("Installing serial in 5 seconds")
+		time.sleep(5)
+		os.system("easy_install pyserial")
+		
+		
+def checkForScreen():
+	computerOS = findOS()
+	if (computerOS == "windows"):
+		print ("You are using windows, swapping to putty")
+	elif(computerOS == "mac"):
+		print ("Mac already has screen as default")
+		
+	else:
+		#Linux Based
+		returnValue = os.system("screen --help > /dev/null") 
+		if(returnValue==32512):
+			print ("Screen not installed")
+			print ("Now installing screen")
+			if(computerOS == "debian"):
+				print ("Assuming your using APT-GET")
+				print ("Installing screen in 5 seconds")
+				time.sleep(5)
+				os.system("apt-get install screen -y")
+			if(computerOS == "redHat"):
+				print ("Assuming your using Yum")
+				print ("Installing screen in 5 seconds")
+				time.sleep(5)
+				os.system("yum install screen -y")
+				
+			if(computerOS == "suse"):
+				print ("Assuming your using Suse")
+				print ("Installing screen in 5 seconds")
+				time.sleep(5)
+				os.system("zypper install screen")
+			
+		else:
+			print ("I believe screen is installed")
+			
+		
+	
+
+
+#Now this is the program
+if __name__ == "__main__":
+	print ("Raspberry Pi Debug Clip Auto Launcher\nBy Ryanteck LTD.\n")
+	computerOS = findOS()
+	time.sleep(1)
+	
+	#Now try to import serial
+	try:
+		import serial
+		print ("Pyserial Is Installed")
+		
+	except ImportError:
+		print ("Pyserial is not installed.\nWill now try to install Pyserial\n")
+
+		installPyserial()
+		time.sleep(1)
+		try:
+			import serial
+			print ("Pyserial Is Now Installed")
+			
+		except ImportError:
+			print ("Pyserial may not be installed still. Please re-launch to try again.")
+			exit()
+
+	print ("\nSerial Is Fully Installed And Imported \n")
+	
+	print ("Now checking if screen is installed")
+	checkForScreen()
+	
+
+	print ("Now detecting which serial port the debug clip is on.")
+	debugCablePort = ""
+	import serial.tools.list_ports
+	serialPorts = serial.tools.list_ports.comports()
+	
+	for port in serialPorts:
+		if( "04d8:00dd" in port[2].lower()):
+			print ("Debug Cable Found on port: "+port[0])
+			debugCablePort = port[0]
+	if(debugCablePort == ""):
+		print ("\nError: Debug Cable not detected.\nFor more support please visit our website at http://Ryanteck.com/rtk-000-006\nPress enter to close.")
+		exit()
+	
+	print ("Debug cable fully detected fine.\n Press enter to launch the terminal.")
+	waitforenter = raw_input()
+	if(computerOS != "windows"):
+		print ("Screen Based OS")
+		os.system("screen "+debugCablePort+" 115200")
+	else:
+		print ("Usually windows, using putty instead")
+		os.system("putty.exe")
+	
+	
+		
+	
+			
